@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儿童暴发性心肌炎预后预测</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .reference {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .calculate-btn:hover {
+            transform: scale(0.98);
+            background: linear-gradient(135deg, #27ae60, #219653);
+        }
+        
+        .result {
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .risk-low {
+            background: #d5f4e6;
+            border-left: 6px solid #27ae60;
+        }
+        
+        .risk-medium {
+            background: #fff3cd;
+            border-left: 6px solid #f39c12;
+        }
+        
+        .risk-high {
+            background: #fdeaea;
+            border-left: 6px solid #e74c3c;
+        }
+        
+        .risk-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .risk-score {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        /* 优化后的风险指示器 */
+        .risk-indicator {
+            margin: 20px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        /* 风险进度条容器 */
+        .risk-progress-container {
+            position: relative;
+            margin-bottom: 40px;
+        }
+        
+        .risk-progress-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            position: relative;
+            overflow: visible;
+            display: flex;
+        }
+        
+        /* 进度条分段 */
+        .progress-segment {
+            height: 100%;
+            flex: 1;
+        }
+        
+        .low-risk-segment {
+            background: #27ae60;
+            border-radius: 15px 0 0 15px;
+        }
+        
+        .medium-risk-segment {
+            background: #f39c12;
+        }
+        
+        .high-risk-segment {
+            background: #e74c3c;
+            border-radius: 0 15px 15px 0;
+        }
+        
+        /* 风险标记 */
+        .risk-marker {
+            position: absolute;
+            top: -20px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+            transition: left 0.5s ease;
+        }
+        
+        .marker-dot {
+            width: 20px;
+            height: 20px;
+            background: #2c3e50;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .marker-value {
+            margin-top: 5px;
+            padding: 4px 8px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        /* 阈值标记线 */
+        .threshold-line {
+            position: absolute;
+            top: -5px;
+            bottom: -5px;
+            width: 1px;
+            background: rgba(0,0,0,0.3);
+        }
+        
+        .low-threshold::after {
+            content: "0.604";
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #7f8c8d;
+            white-space: nowrap;
+        }
+        
+        .medium-threshold::after {
+            content: "0.973";
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #7f8c8d;
+            white-space: nowrap;
+        }
+        
+        /* 风险标签容器 */
+        .risk-labels-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .risk-label-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .risk-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        
+        .low-risk-color {
+            background: #27ae60;
+        }
+        
+        .medium-risk-color {
+            background: #f39c12;
+        }
+        
+        .high-risk-color {
+            background: #e74c3c;
+        }
+        
+        .label-text {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .risk-label-item:nth-child(1) .label-text {
+            color: #27ae60;
+        }
+        
+        .risk-label-item:nth-child(2) .label-text {
+            color: #f39c12;
+        }
+        
+        .risk-label-item:nth-child(3) .label-text {
+            color: #e74c3c;
+        }
+        
+        .threshold-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        
+        .model-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>儿童暴发性心肌炎预后预测</h1>
+            <p>基于多因素Cox回归模型 | 准确率: 77.4%</p>
+        </div>
+        
+        <div class="input-group">
+            <label for="ck_mb">肌酸激酶同工酶 (μg/L)</label>
+            <input type="number" id="ck_mb" step="0.1" placeholder="请输入检验值" min="0">
+            <div class="reference">参考范围: 0-25 μg/L</div>
+        </div>
+        
+        <div class="input-group">
+            <label for="d_dimer">D-二聚体 (mg/L)</label>
+            <input type="number" id="d_dimer" step="0.01" placeholder="请输入检验值" min="0">
+            <div class="reference">参考范围: 0-0.5 mg/L</div>
+        </div>
+        
+        <button class="calculate-btn" id="calculateBtn">
+            计算风险评分
+        </button>
+        
+        <div id="result" class="result">
+            <div class="risk-title" id="riskLevel"></div>
+            <div class="risk-score" id="riskScore"></div>
+            
+            <!-- 优化后的可视化风险指示器 -->
+            <div class="risk-indicator">
+                <!-- 风险进度条 -->
+                <div class="risk-progress-container">
+                    <div class="risk-progress-bar">
+                        <div class="progress-segment low-risk-segment"></div>
+                        <div class="progress-segment medium-risk-segment"></div>
+                        <div class="progress-segment high-risk-segment"></div>
+                        <div class="risk-marker" id="riskMarker">
+                            <div class="marker-dot"></div>
+                            <div class="marker-value" id="markerValue">0.0000</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 阈值标记线 -->
+                    <div class="threshold-line low-threshold" style="left: 33%"></div>
+                    <div class="threshold-line medium-threshold" style="left: 67%"></div>
+                </div>
+                
+                <!-- 风险标签和阈值 -->
+                <div class="risk-labels-container">
+                    <div class="risk-label-item">
+                        <div class="risk-color low-risk-color"></div>
+                        <div class="label-text">低风险</div>
+                        <div class="threshold-text">≤0.604</div>
+                    </div>
+                    <div class="risk-label-item">
+                        <div class="risk-color medium-risk-color"></div>
+                        <div class="label-text">中风险</div>
+                        <div class="threshold-text">0.604-0.973</div>
+                    </div>
+                    <div class="risk-label-item">
+                        <div class="risk-color high-risk-color"></div>
+                        <div class="label-text">高风险</div>
+                        <div class="threshold-text">>0.973</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="model-info">
+            <strong>模型信息:</strong><br>
+            • 基于99例患者数据开发<br>
+            • C-index: 0.774 | 模型显著性: P 小于 0.001<br>
+        </div>
+    </div>
+    
+    <div class="footer">
+        儿童暴发性心肌炎预后预测工具 v1.0<br>
+        仅供临床参考使用 | 更新时间: 2025-11-20
+    </div>
+
+    <script>
+        // 单位转换系数 (g/L 转 μg/L)
+        const UNIT_CONVERSION = 1000000;
+        
+        // 风险分层阈值
+        const RISK_THRESHOLDS = {
+            low: 0.604,
+            medium: 0.973
+        };
+
+        // 标准化函数 - 基于原始数据的统计特性
+        function standardizeValue(value, mean, std) {
+            return (value - mean) / std;
+        }
+        
+        // 更新风险指示器
+        function updateRiskIndicator(riskScore) {
+            const marker = document.getElementById('riskMarker');
+            const markerValue = document.getElementById('markerValue');
+            
+            // 计算标记位置 (0-100%)
+            let position;
+            if (riskScore <= RISK_THRESHOLDS.low) {
+                // 低风险区间: 0% 到 33%
+                position = (riskScore / RISK_THRESHOLDS.low) * 33;
+            } else if (riskScore <= RISK_THRESHOLDS.medium) {
+                // 中风险区间: 33% 到 67%
+                position = 33 + ((riskScore - RISK_THRESHOLDS.low) / (RISK_THRESHOLDS.medium - RISK_THRESHOLDS.low)) * 34;
+            } else {
+                // 高风险区间: 67% 到 100%
+                // 限制最大显示值，避免超出范围
+                const maxDisplayScore = Math.max(RISK_THRESHOLDS.medium * 2, riskScore);
+                position = 67 + ((riskScore - RISK_THRESHOLDS.medium) / (maxDisplayScore - RISK_THRESHOLDS.medium)) * 33;
+                if (position > 100) position = 95; // 留出一些空间
+            }
+            
+            marker.style.left = `${position}%`;
+            markerValue.textContent = riskScore;
+        }
+
+        function calculateRisk() {
+            // 获取输入值
+            const ck_mb_ugL = parseFloat(document.getElementById('ck_mb').value);
+            const d_dimer_mgL = parseFloat(document.getElementById('d_dimer').value);
+            
+            // 验证输入
+            if (!ck_mb_ugL && !d_dimer_mgL) {
+                alert('请输入检验值');
+                return;
+            }
+            
+            if (isNaN(ck_mb_ugL) || isNaN(d_dimer_mgL)) {
+                alert('请输入有效的数值');
+                return;
+            }
+            
+            // 单位转换: μg/L 转 g/L (用于模型计算)
+            const ck_mb_gL = ck_mb_ugL / UNIT_CONVERSION;
+            
+            // 模型参数 (基于标准化后的数据)
+            const coefficients = {
+                ck_mb: 0.6501,   // 肌酸激酶同工酶系数
+                d_dimer: 0.4821  // D-二聚体系数
+            };
+            
+            // 标准化参数（基于常见参考范围）
+            const standardizationParams = {
+                ck_mb: {
+                    mean: 0.00001, // 约10 μg/L
+                    std: 0.00002   // 约20 μg/L
+                },
+                d_dimer: {
+                    mean: 0.5,     // 0.5 mg/L
+                    std: 1.0       // 1.0 mg/L
+                }
+            };
+            
+            // 标准化输入值
+            const ck_standardized = standardizeValue(ck_mb_gL, 
+                standardizationParams.ck_mb.mean, 
+                standardizationParams.ck_mb.std);
+                
+            const d_dimer_standardized = standardizeValue(d_dimer_mgL,
+                standardizationParams.d_dimer.mean,
+                standardizationParams.d_dimer.std);
+            
+            // 计算风险评分
+            const risk_score = (coefficients.ck_mb * ck_standardized + 
+                               coefficients.d_dimer * d_dimer_standardized);
+            const rounded_score = risk_score.toFixed(4);
+            
+            // 风险分类
+            let riskLevel, riskClass;
+            if (risk_score <= RISK_THRESHOLDS.low) {
+                riskLevel = "🟢 低风险";
+                riskClass = "risk-low";
+            } else if (risk_score <= RISK_THRESHOLDS.medium) {
+                riskLevel = "🟡 中风险";
+                riskClass = "risk-medium";
+            } else {
+                riskLevel = "🔴 高风险";
+                riskClass = "risk-high";
+            }
+            
+            // 显示结果
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            result.className = 'result ' + riskClass;
+            
+            document.getElementById('riskLevel').innerHTML = riskLevel;
+            document.getElementById('riskScore').textContent = `风险评分: ${rounded_score}`;
+            
+            // 更新风险指示器
+            updateRiskIndicator(rounded_score);
+            
+            // 滚动到结果
+            result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // 回车键触发计算
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                calculateRisk();
+            }
+        });
+        
+        // 页面加载后自动聚焦到第一个输入框
+        window.onload = function() {
+            document.getElementById('ck_mb').focus();
+        };
+
+        // 绑定计算按钮点击事件
+        document.getElementById('calculateBtn').addEventListener('click', calculateRisk);
+    </script>
+</body>
+</html>
